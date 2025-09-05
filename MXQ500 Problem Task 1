@@ -1,0 +1,328 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyPmhYasyhBdAxtQCnJbpTs0",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "ir",
+      "display_name": "R"
+    },
+    "language_info": {
+      "name": "R"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/Raman87deep/ACB-New-Systems/blob/main/MXQ500%20Problem%20Task%201\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 2,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 106
+        },
+        "id": "TsbTThuOCLA8",
+        "outputId": "af19f93f-8b85-4206-f8a9-99bcff5e63e1"
+      },
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "ERROR",
+          "evalue": "Error in library(kableExtra): there is no package called ‘kableExtra’\n",
+          "traceback": [
+            "Error in library(kableExtra): there is no package called ‘kableExtra’\nTraceback:\n",
+            "1. stop(packageNotFoundError(package, lib.loc, sys.call()))"
+          ]
+        }
+      ],
+      "source": [
+        "# MXQ500 Statistical Data Analysis\n",
+        "# Assignment 1: Problem-solving task 1\n",
+        "# Student Name: [Your Name]\n",
+        "# Student Number: [Your Number]\n",
+        "\n",
+        "# Load required libraries\n",
+        "library(tidyverse)\n",
+        "library(ggplot2)\n",
+        "library(dplyr)\n",
+        "library(forcats)\n",
+        "library(knitr)\n",
+        "library(kableExtra)\n",
+        "\n",
+        "# Set working directory (adjust as needed)\n",
+        "# setwd(\"your/working/directory\")\n",
+        "\n",
+        "# ===== STEP 1: Load and Filter Data =====\n",
+        "\n",
+        "# Load the main dataset\n",
+        "flight_data <- read.csv(\"PST1Data.csv\", stringsAsFactors = FALSE)\n",
+        "\n",
+        "# IMPORTANT: Replace 'YOUR_ORIGIN' with your assigned origin code\n",
+        "YOUR_ORIGIN <- \"XXX\"  # <-- CHECK THE DISCUSSION BOARD FOR YOUR ASSIGNED ORIGIN\n",
+        "\n",
+        "# Filter by your unique Origin and remove Origin columns\n",
+        "my_flight_data <- flight_data %>%\n",
+        "  filter(Origin == YOUR_ORIGIN) %>%\n",
+        "  select(-Origin, -OriginStateName)\n",
+        "\n",
+        "# Load airport codes\n",
+        "airport_codes <- read.csv(\"PST1AirportCodes.csv\", stringsAsFactors = FALSE)\n",
+        "names(airport_codes) <- c(\"DestAirportName\", \"Dest\")\n",
+        "\n",
+        "# Load airline codes\n",
+        "airline_codes <- read.csv(\"PST1AirlineCodes.csv\", stringsAsFactors = FALSE)\n",
+        "names(airline_codes) <- c(\"AirlineName\", \"Reporting_Airline\")\n",
+        "\n",
+        "# Join to add airport and airline names\n",
+        "my_flight_data <- my_flight_data %>%\n",
+        "  left_join(airport_codes, by = \"Dest\") %>%\n",
+        "  left_join(airline_codes, by = \"Reporting_Airline\")\n",
+        "\n",
+        "# ===== SECTION A1: Data Structure =====\n",
+        "\n",
+        "# View structure of the data\n",
+        "str(my_flight_data)\n",
+        "\n",
+        "# Create data dictionary\n",
+        "data_dict <- data.frame(\n",
+        "  Variable = names(my_flight_data),\n",
+        "  Description = c(\n",
+        "    \"Date of the flight\",\n",
+        "    \"Airline code\",\n",
+        "    \"Destination airport code\",\n",
+        "    \"Destination state name\",\n",
+        "    \"Departure delay in minutes (negative = early)\",\n",
+        "    \"Arrival delay in minutes (negative = early)\",\n",
+        "    \"Destination airport name\",\n",
+        "    \"Airline name\"\n",
+        "  ),\n",
+        "  Type = c(\"Date\", \"Categorical\", \"Categorical\", \"Categorical\",\n",
+        "           \"Numeric\", \"Numeric\", \"Categorical\", \"Categorical\"),\n",
+        "  Class = sapply(my_flight_data, class)\n",
+        ")\n",
+        "\n",
+        "print(data_dict)\n",
+        "\n",
+        "# Convert data types\n",
+        "my_flight_data <- my_flight_data %>%\n",
+        "  mutate(\n",
+        "    FlightDate = as.Date(FlightDate),\n",
+        "    Reporting_Airline = as.factor(Reporting_Airline),\n",
+        "    Dest = as.factor(Dest),\n",
+        "    DestStateName = as.factor(DestStateName),\n",
+        "    DepDelay = as.numeric(DepDelay),\n",
+        "    ArrDelay = as.numeric(ArrDelay),\n",
+        "    DestAirportName = as.factor(DestAirportName),\n",
+        "    AirlineName = as.factor(AirlineName)\n",
+        "  )\n",
+        "\n",
+        "# Verify data types after conversion\n",
+        "str(my_flight_data)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "e5c9f9e3",
+        "outputId": "19bbc45d-3833-442b-9dc7-03dbeff25b73"
+      },
+      "source": [
+        "install.packages(\"kableExtra\")"
+      ],
+      "execution_count": 3,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "Installing package into ‘/usr/local/lib/R/site-library’\n",
+            "(as ‘lib’ is unspecified)\n",
+            "\n",
+            "also installing the dependency ‘svglite’\n",
+            "\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "5de0b56d",
+        "outputId": "3251c1c6-942f-4fb7-f435-6563d6908cc8"
+      },
+      "source": [
+        "# MXQ500 Statistical Data Analysis\n",
+        "# Assignment 1: Problem-solving task 1\n",
+        "# Student Name: [Your Name]\n",
+        "# Student Number: [Your Number]\n",
+        "\n",
+        "# Load required libraries\n",
+        "library(tidyverse)\n",
+        "library(ggplot2)\n",
+        "library(dplyr)\n",
+        "library(forcats)\n",
+        "library(knitr)\n",
+        "library(kableExtra)\n",
+        "\n",
+        "# Set working directory (adjust as needed)\n",
+        "# setwd(\"your/working/directory\")\n",
+        "\n",
+        "# ===== STEP 1: Load and Filter Data =====\n",
+        "\n",
+        "# Load the main dataset\n",
+        "flight_data <- read.csv(\"PST1Data.csv\", stringsAsFactors = FALSE)\n",
+        "\n",
+        "# IMPORTANT: Replace 'YOUR_ORIGIN' with your assigned origin code\n",
+        "YOUR_ORIGIN <- \"XXX\"  # <-- CHECK THE DISCUSSION BOARD FOR YOUR ASSIGNED ORIGIN\n",
+        "\n",
+        "# Filter by your unique Origin and remove Origin columns\n",
+        "my_flight_data <- flight_data %>%\n",
+        "  filter(Origin == YOUR_ORIGIN) %>%\n",
+        "  select(-Origin, -OriginStateName)\n",
+        "\n",
+        "# Load airport codes\n",
+        "airport_codes <- read.csv(\"PST1AirportCodes.csv\", stringsAsFactors = FALSE)\n",
+        "names(airport_codes) <- c(\"DestAirportName\", \"Dest\")\n",
+        "\n",
+        "# Load airline codes\n",
+        "airline_codes <- read.csv(\"PST1AirlineCodes.csv\", stringsAsFactors = FALSE)\n",
+        "names(airline_codes) <- c(\"AirlineName\", \"Reporting_Airline\")\n",
+        "\n",
+        "# Join to add airport and airline names\n",
+        "my_flight_data <- my_flight_data %>%\n",
+        "  left_join(airport_codes, by = \"Dest\") %>%\n",
+        "  left_join(airline_codes, by = \"Reporting_Airline\")\n",
+        "\n",
+        "# ===== SECTION A1: Data Structure =====\n",
+        "\n",
+        "# View structure of the data\n",
+        "str(my_flight_data)\n",
+        "\n",
+        "# Create data dictionary\n",
+        "data_dict <- data.frame(\n",
+        "  Variable = names(my_flight_data),\n",
+        "  Description = c(\n",
+        "    \"Date of the flight\",\n",
+        "    \"Airline code\",\n",
+        "    \"Destination airport code\",\n",
+        "    \"Destination state name\",\n",
+        "    \"Departure delay in minutes (negative = early)\",\n",
+        "    \"Arrival delay in minutes (negative = early)\",\n",
+        "    \"Destination airport name\",\n",
+        "    \"Airline name\"\n",
+        "  ),\n",
+        "  Type = c(\"Date\", \"Categorical\", \"Categorical\", \"Categorical\",\n",
+        "           \"Numeric\", \"Numeric\", \"Categorical\", \"Categorical\"),\n",
+        "  Class = sapply(my_flight_data, class)\n",
+        ")\n",
+        "\n",
+        "print(data_dict)\n",
+        "\n",
+        "# Convert data types\n",
+        "my_flight_data <- my_flight_data %>%\n",
+        "  mutate(\n",
+        "    FlightDate = as.Date(FlightDate),\n",
+        "    Reporting_Airline = as.factor(Reporting_Airline),\n",
+        "    Dest = as.factor(Dest),\n",
+        "    DestStateName = as.factor(DestStateName),\n",
+        "    DepDelay = as.numeric(DepDelay),\n",
+        "    ArrDelay = as.numeric(ArrDelay),\n",
+        "    DestAirportName = as.factor(DestAirportName),\n",
+        "    AirlineName = as.factor(AirlineName)\n",
+        "  )\n",
+        "\n",
+        "# Verify data types after conversion\n",
+        "str(my_flight_data)"
+      ],
+      "execution_count": 4,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "\n",
+            "Attaching package: ‘kableExtra’\n",
+            "\n",
+            "\n",
+            "The following object is masked from ‘package:dplyr’:\n",
+            "\n",
+            "    group_rows\n",
+            "\n",
+            "\n"
+          ]
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "'data.frame':\t0 obs. of  8 variables:\n",
+            " $ FlightDate       : chr \n",
+            " $ Reporting_Airline: chr \n",
+            " $ Dest             : chr \n",
+            " $ DestStateName    : chr \n",
+            " $ DepDelay         : int \n",
+            " $ ArrDelay         : int \n",
+            " $ DestAirportName  : chr \n",
+            " $ AirlineName      : chr \n",
+            "                           Variable\n",
+            "FlightDate               FlightDate\n",
+            "Reporting_Airline Reporting_Airline\n",
+            "Dest                           Dest\n",
+            "DestStateName         DestStateName\n",
+            "DepDelay                   DepDelay\n",
+            "ArrDelay                   ArrDelay\n",
+            "DestAirportName     DestAirportName\n",
+            "AirlineName             AirlineName\n",
+            "                                                    Description        Type\n",
+            "FlightDate                                   Date of the flight        Date\n",
+            "Reporting_Airline                                  Airline code Categorical\n",
+            "Dest                                   Destination airport code Categorical\n",
+            "DestStateName                            Destination state name Categorical\n",
+            "DepDelay          Departure delay in minutes (negative = early)     Numeric\n",
+            "ArrDelay            Arrival delay in minutes (negative = early)     Numeric\n",
+            "DestAirportName                        Destination airport name Categorical\n",
+            "AirlineName                                        Airline name Categorical\n",
+            "                      Class\n",
+            "FlightDate        character\n",
+            "Reporting_Airline character\n",
+            "Dest              character\n",
+            "DestStateName     character\n",
+            "DepDelay            integer\n",
+            "ArrDelay            integer\n",
+            "DestAirportName   character\n",
+            "AirlineName       character\n",
+            "'data.frame':\t0 obs. of  8 variables:\n",
+            " $ FlightDate       : 'Date' num(0) \n",
+            " $ Reporting_Airline: Factor w/ 0 levels: \n",
+            " $ Dest             : Factor w/ 0 levels: \n",
+            " $ DestStateName    : Factor w/ 0 levels: \n",
+            " $ DepDelay         : num \n",
+            " $ ArrDelay         : num \n",
+            " $ DestAirportName  : Factor w/ 0 levels: \n",
+            " $ AirlineName      : Factor w/ 0 levels: \n"
+          ]
+        }
+      ]
+    }
+  ]
+}
